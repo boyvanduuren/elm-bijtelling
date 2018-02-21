@@ -4,6 +4,7 @@ import Html exposing (Html, Attribute, beginnerProgram, text, div, input)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Result exposing (withDefault)
+import List exposing (foldl, map)
 import String
 
 
@@ -28,15 +29,18 @@ verschuldigd bedrag =
         -- note that the last bracket has no upper bound so we set it
         -- to the lower bound and account for it in the calculation
         schaalVier = Schaal 68507 68507 51.95
-        berekening jaarSalaris schaal =
-          let verschil = jaarSalaris - schaal.start in
-            if jaarSalaris > schaal.start
+        berekening : Schaal -> Float
+        berekening schaal =
+          let verschil = bedrag - schaal.start in
+            if bedrag > schaal.start
             then if verschil < schaal.eind || schaal.start == schaal.eind
               then verschil * schaal.percentage / 100
               else (schaal.eind - schaal.start) * schaal.percentage / 100
             else 0
      in
-        berekening bedrag schaalEen + berekening bedrag schaalTwee + berekening bedrag schaalDrie + berekening bedrag schaalVier
+        [schaalEen,schaalTwee,schaalDrie,schaalVier]
+            |> List.map berekening
+            |> foldl (+) 0
 
 -- Parse a string as float, or return 0 if we can't
 parseInputField : String -> Float
@@ -91,5 +95,5 @@ berekenBijtelling model =
     bijtelling = verschuldigd (model.jaarSalaris + (model.catalogusWaarde * model.bijtelling / 100))
     maandelijks = (bijtelling - belasting) / 12
   in
-    div [] [ text (toString (round maandelijks)) ]
+    div [] [ text ("€" ++ (toString (round maandelijks)) ++ "/month net") ]
 
